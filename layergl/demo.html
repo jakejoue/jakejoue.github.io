@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Mapbox GL JS debug page</title>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, user-scalable=no"
+        />
+        <link rel="stylesheet" href="./mapbox-gl/mapbox-gl.css" />
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            html,
+            body,
+            #map {
+                height: 100%;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="map"></div>
+
+        <script src="./mapbox-gl/mapbox-gl.js"></script>
+        <script src="./mapbox-gl/access_token_generated.js"></script>
+        <script src="../build/layergl.js"></script>
+        <script>
+            var map = (window.map = new mapboxgl.Map({
+                container: "map",
+                zoom: 15,
+                center: [-73.96135450317462, 40.78853540946085],
+                pitch: 60,
+                style: {
+                    version: 8,
+                    sources: {
+                        cartodb: {
+                            type: "raster",
+                            tiles: [
+                                "http://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+                            ],
+                            tileSize: 256,
+                        },
+                    },
+                    layers: [
+                        {
+                            id: "1",
+                            type: "raster",
+                            source: "cartodb",
+                        },
+                    ],
+                },
+                hash: false,
+            }));
+
+            var view = new layergl.View({
+                map: layergl.map.getMapBoxGLMap(map),
+                effects: [
+                    // new layergl.BlurEffect(),
+                    // new layergl.DepthEffect(),
+                    new layergl.BrightEffect({
+                        blurSize: 2,
+                        threshold: 0.3,
+                        clarity: 1,
+                    }),
+                    // new layergl.BloomEffect({
+                    //     blurSize: 2,
+                    //     threshold: 0,
+                    // }),
+                ],
+            });
+
+            // 烟花图
+            var point = {
+                lng: -73.96157342710615,
+                lat: 40.78862769626144,
+            };
+            var sparkData1 = [];
+            var sparkData2 = [];
+            var sparkData3 = [];
+            var randomNum = 40;
+            var RANDOM_SIZE = 0.01;
+            for (var i = 0; i < randomNum; i++) {
+                var coord = [
+                    point.lng + RANDOM_SIZE * Math.random() - RANDOM_SIZE / 2,
+                    point.lat + RANDOM_SIZE * Math.random() - RANDOM_SIZE / 2,
+                ];
+                sparkData1.push({
+                    geometry: {
+                        type: "Point",
+                        coordinates: coord,
+                    },
+                    properties: {
+                        height: parseInt(200 * Math.random(), 10),
+                    },
+                });
+            }
+            for (var i = 0; i < randomNum; i++) {
+                var coord = [
+                    point.lng + RANDOM_SIZE * Math.random() - RANDOM_SIZE / 2,
+                    point.lat + RANDOM_SIZE * Math.random() - RANDOM_SIZE / 2,
+                ];
+                sparkData2.push({
+                    geometry: {
+                        type: "Point",
+                        coordinates: coord,
+                    },
+                    properties: {
+                        height: parseInt(200 * Math.random(), 10),
+                    },
+                });
+            }
+            for (var i = 0; i < randomNum; i++) {
+                var coord = [
+                    point.lng + RANDOM_SIZE * Math.random() - RANDOM_SIZE / 2,
+                    point.lat + RANDOM_SIZE * Math.random() - RANDOM_SIZE / 2,
+                ];
+                sparkData3.push({
+                    geometry: {
+                        type: "Point",
+                        coordinates: coord,
+                    },
+                    properties: {
+                        height: parseInt(200 * Math.random(), 10),
+                    },
+                });
+            }
+            var sparkLayer1 = new layergl.SparkLayer({
+                height: function (data) {
+                    return data.properties.height;
+                },
+                step: 0.1,
+                startTime: 1,
+                endTime: 12,
+                color: "rgb(255, 153, 51)",
+            });
+            var sparkLayer2 = new layergl.SparkLayer({
+                height: function (data) {
+                    return data.properties.height;
+                },
+                color: "rgb(255, 0, 255)",
+            });
+            var sparkLayer3 = new layergl.SparkLayer({
+                height: function (data) {
+                    return data.properties.height;
+                },
+                step: 0.1,
+                startTime: 2,
+                endTime: 10,
+                color: "rgb(0, 204, 255)",
+            });
+            sparkLayer1.setData(sparkData1);
+            sparkLayer2.setData(sparkData2);
+            sparkLayer3.setData(sparkData3);
+
+            // 相关坐标点
+            var centerPoint = [-73.96157342710615, 40.78862769626144],
+                leftPoint = [-73.97268764451633, 40.789964956045594],
+                rightPoint = [-73.95296161199616, 40.78237907097798],
+                topPoint = [-73.95208268279788, 40.80320471553378];
+
+            // 波纹圆
+            var groundRippleLayer = new layergl.GroundRippleLayer({
+                data: [
+                    {
+                        properties: {
+                            size: 400,
+                            width: 50,
+                            color: "rgba(255, 255, 255, 0.3)",
+                        },
+                        geometry: {
+                            type: "Point",
+                            coordinates: leftPoint,
+                        },
+                    },
+                ],
+                size: function (data) {
+                    return data.properties.size;
+                },
+                width: function (data) {
+                    return data.properties.width;
+                },
+                color: function (data) {
+                    return data.properties.color;
+                },
+            });
+
+            // 圆柱扩散
+            var cylinderSpreadLayer = new layergl.CylinderSpreadLayer({
+                data: [
+                    {
+                        properties: {
+                            size: 350,
+                            width: 150,
+                            color: "rgba(255, 255, 255, 1.0)",
+                        },
+                        geometry: {
+                            type: "Point",
+                            coordinates: rightPoint,
+                        },
+                    },
+                ],
+                duration: 5,
+                height: function (data) {
+                    return data.properties.width;
+                },
+                radius: function (data) {
+                    return data.properties.size;
+                },
+                color: function (data) {
+                    return data.properties.color;
+                },
+            });
+
+            // 贴图
+            var imageCircleLayer = new layergl.ImageCircleLayer({
+                texture: "./static/circular.png",
+                radius: 200,
+                data: [
+                    {
+                        geometry: {
+                            type: "Point",
+                            coordinates: centerPoint,
+                        },
+                    },
+                ],
+            });
+
+            // 防护罩
+            var shieldLayer = new layergl.ShieldLayer({
+                color: "rgb(60, 177, 172)",
+                radius: 150,
+                data: [
+                    {
+                        geometry: {
+                            type: "Point",
+                            coordinates: topPoint,
+                        },
+                    },
+                ],
+            });
+
+            // 圆柱
+            var dynamicCylinderLayer = new layergl.DynamicCylinderLayer({
+                color: "rgba(194, 147, 75, 1.0)",
+                data: [
+                    {
+                        geometry: {
+                            type: "Point",
+                            coordinates: centerPoint,
+                        },
+                    },
+                ],
+            });
+
+            // 构造曲线数据
+            var centerPointWithHeight = centerPoint.concat(100);
+            var curve = new layergl.curve.BezierCurve({
+                start: centerPointWithHeight,
+                end: leftPoint,
+            });
+            var line1 = curve.getPoints(50);
+            curve.setOptions({
+                start: centerPointWithHeight,
+                end: rightPoint,
+            });
+            var line2 = curve.getPoints(50);
+            curve.setOptions({
+                start: centerPointWithHeight,
+                end: topPoint.concat(150),
+            });
+            var line3 = curve.getPoints(50);
+            // 所有的线数据
+            var data = [
+                {
+                    color: "rgb(255, 113, 113, 0.8)",
+                    tripColor: "rgb(255, 255, 204)",
+                    geometry: {
+                        type: "LineString",
+                        coordinates: line1,
+                    },
+                },
+                {
+                    color: "rgb(113, 113, 255, 0.8)",
+                    tripColor: "rgb(255, 255, 204)",
+                    geometry: {
+                        type: "LineString",
+                        coordinates: line2,
+                    },
+                },
+                {
+                    color: "rgb(45, 144, 172, 0.8)",
+                    tripColor: "rgb(255, 255, 204)",
+                    geometry: {
+                        type: "LineString",
+                        coordinates: line3,
+                    },
+                },
+            ];
+            // 线颜色
+            var lineLayer = new layergl.SimpleLineLayer({
+                data: data,
+                color: function (data) {
+                    return data.color;
+                },
+            });
+            // 飞线
+            var lineTripLayer = new layergl.LineTripLayer({
+                data: data,
+                trailLength: 3,
+                color: function (data) {
+                    return data.tripColor;
+                },
+            });
+
+            fetch("./static/central_park.json")
+                .then((response) => response.json())
+                .then((polygons) => {
+                    var points = [];
+                    // polygon 转 points
+                    for (var i = 0; i < polygons.length; i++) {
+                        var polygon = polygons[i];
+                        var { height = 0, min_height = 0 } = polygon.properties;
+                        var { type, coordinates } = polygon.geometry;
+
+                        if (type === "Polygon") {
+                            coordinates = [coordinates];
+                        }
+
+                        for (var j = 0; j < coordinates.length; j++) {
+                            // 第一层
+                            var coord = coordinates[j];
+
+                            // 第二层
+                            for (var k = 0; k < coord.length; k++) {
+                                var coord1 = coord[k];
+
+                                for (var l = 0; l < coord1.length; l++) {
+                                    var coord2 = coord1[l];
+
+                                    // 设置最小高度（为面图层）
+                                    coord2[2] = min_height;
+
+                                    // 存入点数据
+                                    points.push({
+                                        geometry: {
+                                            type: "Point",
+                                            coordinates: [
+                                                coord2[0],
+                                                coord2[1],
+                                                min_height + height,
+                                            ],
+                                        },
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // 建筑物
+                    var shapeLayer = new layergl.ShapeLayer({
+                        data: polygons,
+                        effects: [groundRippleLayer, cylinderSpreadLayer],
+                        style: "window",
+                        useLight: true,
+                        color: "rgba(194, 147, 75, 1.0)",
+                        isTextureFull: true,
+                        texture: "./static/wall2.png",
+                        height: function (data) {
+                            return data.properties.height;
+                        },
+                        enablePicked: true,
+                        onClick: function (evt) {
+                            console.log(evt);
+                        },
+                        autoSelect: true,
+                    });
+
+                    // 点图层
+                    var pointLayer = new layergl.PointLayer({
+                        data: points,
+                        size: function (data) {
+                            return Math.max(
+                                Math.min(
+                                    data.geometry.coordinates[2] / 10,
+                                    2.5
+                                ),
+                                1
+                            );
+                        },
+                        color: function () {
+                            var rgba = [255, 250, 240, 0.8];
+                            rgba[3] = Math.random();
+
+                            return rgba;
+                        },
+                    });
+
+                    view.addLayer(groundRippleLayer);
+                    view.addLayer(cylinderSpreadLayer);
+                    view.addLayer(imageCircleLayer);
+
+                    view.addLayer(shapeLayer);
+                    view.addLayer(pointLayer);
+
+                    view.addLayer(dynamicCylinderLayer);
+
+                    view.addLayer(sparkLayer1);
+                    view.addLayer(sparkLayer2);
+                    view.addLayer(sparkLayer3);
+
+                    view.addLayer(shieldLayer);
+                    view.addLayer(lineLayer);
+                    view.addLayer(lineTripLayer);
+                });
+        </script>
+    </body>
+</html>

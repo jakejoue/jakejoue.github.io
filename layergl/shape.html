@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Mapbox GL JS debug page</title>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, user-scalable=no"
+        />
+        <link rel="stylesheet" href="./mapbox-gl/mapbox-gl.css" />
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            html,
+            body,
+            #map {
+                height: 100%;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="map"></div>
+
+        <script src="./mapbox-gl/mapbox-gl.js"></script>
+        <script src="./mapbox-gl/access_token_generated.js"></script>
+        <script src="../build/layergl.js"></script>
+        <script>
+            var map = (window.map = new mapboxgl.Map({
+                container: "map",
+                zoom: 14,
+                center: [-73.96252891126437, 40.78790687108298],
+                style: {
+                    version: 8,
+                    sources: {
+                        cartodb: {
+                            type: "raster",
+                            tiles: [
+                                "http://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+                            ],
+                            tileSize: 256,
+                        },
+                    },
+                    layers: [
+                        {
+                            id: "1",
+                            type: "raster",
+                            source: "cartodb",
+                        },
+                    ],
+                },
+                hash: false,
+            }));
+
+            var view = new layergl.View({
+                map: layergl.map.getMapBoxGLMap(map),
+                // effects: [new layergl.BloomEffect()]
+            });
+
+            var groundRippleLayer = new layergl.GroundRippleLayer({
+                data: [
+                    {
+                        properties: {
+                            size: 400,
+                            width: 50,
+                            color: "rgba(255, 255, 255, 0.3)",
+                        },
+                        geometry: {
+                            type: "Point",
+                            coordinates: [
+                                -73.97083632157563,
+                                40.79324495625795,
+                            ],
+                        },
+                    },
+                ],
+                size: function (data) {
+                    return data.properties.size;
+                },
+                width: function (data) {
+                    return data.properties.width;
+                },
+                color: function (data) {
+                    return data.properties.color;
+                },
+            });
+            view.addLayer(groundRippleLayer);
+
+            var cylinderSpreadLayer = new layergl.CylinderSpreadLayer({
+                data: [
+                    {
+                        properties: {
+                            size: 350,
+                            width: 150,
+                            color: "rgba(255, 255, 255, 1.0)",
+                        },
+                        geometry: {
+                            type: "Point",
+                            coordinates: [
+                                -73.94953261486705,
+                                40.78597536772364,
+                            ],
+                        },
+                    },
+                ],
+                duration: 5,
+                height: function (data) {
+                    return data.properties.width;
+                },
+                radius: function (data) {
+                    return data.properties.size;
+                },
+                color: function (data) {
+                    return data.properties.color;
+                },
+            });
+            view.addLayer(cylinderSpreadLayer);
+
+            fetch("./static/central_park.json")
+                .then((response) => response.json())
+                .then((polygons) => {
+                    var shapeLayer = new layergl.ShapeLayer({
+                        effects: [groundRippleLayer, cylinderSpreadLayer],
+                        color: "rgba(194, 147, 75, 1.0)",
+                        style: "gradual",
+                        texture: "./static/wall2.png",
+                        isTextureFull: true,
+                        // textureScale: 0.05,
+                        useLight: true,
+                        baseHeight: function (data) {
+                            return data.properties.min_height;
+                        },
+                        height: function (data) {
+                            return data.properties.height;
+                        },
+                        enablePicked: true,
+                        onClick: function (evt) {
+                            console.log(evt);
+                        },
+                        autoSelect: true,
+                    });
+                    shapeLayer.setData(polygons);
+                    view.addLayer(shapeLayer);
+                });
+        </script>
+    </body>
+</html>
