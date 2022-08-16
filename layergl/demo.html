@@ -33,25 +33,7 @@
                 zoom: 15,
                 center: [-73.96135450317462, 40.78853540946085],
                 pitch: 60,
-                style: {
-                    version: 8,
-                    sources: {
-                        cartodb: {
-                            type: "raster",
-                            tiles: [
-                                "http://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-                            ],
-                            tileSize: 256,
-                        },
-                    },
-                    layers: [
-                        {
-                            id: "1",
-                            type: "raster",
-                            source: "cartodb",
-                        },
-                    ],
-                },
+                style: "mapbox://styles/mapbox/dark-v10",
                 hash: false,
             }));
 
